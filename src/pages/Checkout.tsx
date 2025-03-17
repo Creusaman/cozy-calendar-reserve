@@ -3,7 +3,7 @@ import * as React from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { 
-  ArrowLeft, CreditCard, Qrcode, CheckCircle, AlertCircle, 
+  ArrowLeft, CreditCard, QrCode, CheckCircle, AlertCircle, 
   Info, Copy, RefreshCw, Home, ShoppingCart
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -183,12 +183,12 @@ const Checkout = () => {
           {currentStep !== CheckoutStep.SUCCESS && (
             <div className="mb-8">
               <div className="flex items-center">
-                <div className={`step-item ${currentStep === CheckoutStep.REVIEW || currentStep === CheckoutStep.PAYMENT || currentStep === CheckoutStep.PROCESSING || currentStep === CheckoutStep.FAILED || currentStep === CheckoutStep.SUCCESS ? 'active' : ''}`}>
+                <div className={`step-item ${currentStep === CheckoutStep.REVIEW || currentStep === CheckoutStep.PAYMENT || currentStep === CheckoutStep.PROCESSING || currentStep === CheckoutStep.FAILED ? 'active' : ''}`}>
                   <div className="step-number">1</div>
                   <div className="step-label">Revisar</div>
                 </div>
                 <div className="step-divider"></div>
-                <div className={`step-item ${currentStep === CheckoutStep.PAYMENT || currentStep === CheckoutStep.PROCESSING || currentStep === CheckoutStep.FAILED || currentStep === CheckoutStep.SUCCESS ? 'active' : ''}`}>
+                <div className={`step-item ${currentStep === CheckoutStep.PAYMENT || currentStep === CheckoutStep.PROCESSING || currentStep === CheckoutStep.FAILED ? 'active' : ''}`}>
                   <div className="step-number">2</div>
                   <div className="step-label">Pagamento</div>
                 </div>
@@ -361,7 +361,7 @@ const Checkout = () => {
                           Cartão de Crédito
                         </TabsTrigger>
                         <TabsTrigger value="pix">
-                          <Qrcode className="mr-2 h-4 w-4" />
+                          <QrCode className="mr-2 h-4 w-4" />
                           PIX
                         </TabsTrigger>
                       </TabsList>
@@ -460,7 +460,7 @@ const Checkout = () => {
                         <div className="border rounded-lg p-6 bg-muted/20 text-center space-y-4">
                           <div className="mx-auto bg-white p-4 rounded-lg w-48 h-48 flex items-center justify-center">
                             {/* Placeholder for QR code */}
-                            <Qrcode className="h-32 w-32 text-primary" />
+                            <QrCode className="h-32 w-32 text-primary" />
                           </div>
                           <div>
                             <p className="font-medium">Valor: R$ {total.toFixed(2)}</p>
@@ -617,7 +617,8 @@ const Checkout = () => {
         </div>
       </main>
 
-      <style jsx>{`
+      <style>
+        {`
         .step-item {
           display: flex;
           flex-direction: column;
@@ -660,7 +661,8 @@ const Checkout = () => {
           margin: 0 16px;
           margin-bottom: 32px;
         }
-      `}</style>
+        `}
+      </style>
     </div>
   );
 };
