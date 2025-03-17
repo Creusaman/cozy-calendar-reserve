@@ -1,6 +1,6 @@
 
 import * as React from "react";
-import { Wifi, Tv, Coffee, Utensils, Shower, Wind, PawPrint, Baby } from "lucide-react";
+import { Wifi, Tv, Coffee, Utensils, Bath, Wind, PawPrint, Baby } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface Amenity {
@@ -14,7 +14,7 @@ const amenityIcons = {
   tv: Tv,
   coffee: Coffee,
   restaurant: Utensils,
-  shower: Shower,
+  bath: Bath,
   ac: Wind,
   petFriendly: PawPrint,
   kidFriendly: Baby

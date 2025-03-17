@@ -42,7 +42,7 @@ const dummyRooms: Room[] = [
       { id: "2", name: "TV 4K", icon: "tv" },
       { id: "3", name: "Cafeteira", icon: "coffee" },
       { id: "4", name: "Restaurante", icon: "restaurant" },
-      { id: "5", name: "Chuveiro premium", icon: "shower" },
+      { id: "5", name: "Banheira", icon: "bath" },
       { id: "6", name: "Ar-condicionado", icon: "ac" },
     ],
   },
@@ -94,7 +94,7 @@ const dummyRooms: Room[] = [
     amenities: [
       { id: "1", name: "Wi-Fi", icon: "wifi" },
       { id: "2", name: "TV", icon: "tv" },
-      { id: "3", name: "Piscina", icon: "shower" },
+      { id: "3", name: "Piscina", icon: "bath" },
       { id: "4", name: "Ar-condicionado", icon: "ac" },
       { id: "5", name: "Pet-friendly", icon: "petFriendly" },
     ],
