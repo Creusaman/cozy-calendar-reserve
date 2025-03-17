@@ -1,11 +1,13 @@
 
 import * as React from "react";
 import { format } from "date-fns";
-import { X } from "lucide-react";
+import { X, Users, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DateRangePicker } from "@/components/DateRangePicker";
 import { PersonCounter } from "@/components/PersonCounter";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 interface DateRange {
   from: Date | undefined;
@@ -21,6 +23,8 @@ interface Person {
 interface RoomDetailsFormProps {
   onClose: () => void;
   onSubmit: (data: RoomDetailsData) => void;
+  globalDateRange?: DateRange;
+  maxGuests?: number;
 }
 
 export interface RoomDetailsData {
@@ -28,15 +32,17 @@ export interface RoomDetailsData {
   children: number;
   pets: number;
   persons: Person[];
+  useIndividualDates: boolean;
 }
 
-export function RoomDetailsForm({ onClose, onSubmit }: RoomDetailsFormProps) {
+export function RoomDetailsForm({ onClose, onSubmit, globalDateRange, maxGuests = 8 }: RoomDetailsFormProps) {
   const [adults, setAdults] = React.useState(2);
   const [children, setChildren] = React.useState(0);
   const [pets, setPets] = React.useState(0);
+  const [useIndividualDates, setUseIndividualDates] = React.useState(false);
   const [persons, setPersons] = React.useState<Person[]>([
-    { id: "1", name: "", dateRange: { from: undefined, to: undefined } },
-    { id: "2", name: "", dateRange: { from: undefined, to: undefined } },
+    { id: "1", name: "", dateRange: globalDateRange || { from: undefined, to: undefined } },
+    { id: "2", name: "", dateRange: globalDateRange || { from: undefined, to: undefined } },
   ]);
 
   const addPerson = () => {
@@ -46,7 +52,7 @@ export function RoomDetailsForm({ onClose, onSubmit }: RoomDetailsFormProps) {
         { 
           id: Date.now().toString(),
           name: "",
-          dateRange: { from: undefined, to: undefined }
+          dateRange: globalDateRange || { from: undefined, to: undefined }
         }
       ]);
     }
@@ -80,12 +86,25 @@ export function RoomDetailsForm({ onClose, onSubmit }: RoomDetailsFormProps) {
       adults,
       children,
       pets,
-      persons: persons.slice(0, adults + children)
+      persons: persons.slice(0, adults + children),
+      useIndividualDates
     });
   };
 
+  // Apply global date range to all persons when it changes
   React.useEffect(() => {
-    // Adjust persons array when adults or children change
+    if (globalDateRange && !useIndividualDates) {
+      setPersons(prevPersons => 
+        prevPersons.map(person => ({
+          ...person,
+          dateRange: globalDateRange
+        }))
+      );
+    }
+  }, [globalDateRange, useIndividualDates]);
+
+  // Adjust persons array when adults or children change
+  React.useEffect(() => {
     const totalPeople = adults + children;
     
     if (persons.length > totalPeople) {
@@ -98,12 +117,12 @@ export function RoomDetailsForm({ onClose, onSubmit }: RoomDetailsFormProps) {
         newPersons.push({
           id: Date.now().toString() + i,
           name: "",
-          dateRange: { from: undefined, to: undefined }
+          dateRange: globalDateRange || { from: undefined, to: undefined }
         });
       }
       setPersons(newPersons);
     }
-  }, [adults, children]);
+  }, [adults, children, globalDateRange]);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 p-1">
@@ -113,13 +132,13 @@ export function RoomDetailsForm({ onClose, onSubmit }: RoomDetailsFormProps) {
           value={adults}
           onChange={setAdults}
           min={1}
-          max={8}
+          max={maxGuests || 8}
         />
         <PersonCounter
           label="Crianças"
           value={children}
           onChange={setChildren}
-          max={6}
+          max={maxGuests ? maxGuests - 1 : 6}
         />
         <PersonCounter
           label="Animais"
@@ -131,6 +150,16 @@ export function RoomDetailsForm({ onClose, onSubmit }: RoomDetailsFormProps) {
 
       <div className="border-t pt-4">
         <h3 className="text-sm font-medium mb-3">Detalhes dos hóspedes</h3>
+        
+        <div className="flex items-center space-x-2 mb-4">
+          <Switch 
+            id="individual-dates" 
+            checked={useIndividualDates}
+            onCheckedChange={setUseIndividualDates}
+          />
+          <Label htmlFor="individual-dates">Individualizar datas de check-in e check-out</Label>
+        </div>
+        
         <div className="space-y-4">
           {persons.map((person, index) => (
             <div key={person.id} className="p-3 border rounded-lg bg-muted/30">
@@ -160,14 +189,16 @@ export function RoomDetailsForm({ onClose, onSubmit }: RoomDetailsFormProps) {
                     className="h-9 mt-1"
                   />
                 </div>
-                <div>
-                  <label className="text-xs text-muted-foreground">Período da estadia</label>
-                  <DateRangePicker
-                    dateRange={person.dateRange}
-                    onChange={(range) => updatePersonDateRange(person.id, range)}
-                    className="w-full mt-1"
-                  />
-                </div>
+                {useIndividualDates && (
+                  <div>
+                    <label className="text-xs text-muted-foreground">Período da estadia</label>
+                    <DateRangePicker
+                      dateRange={person.dateRange}
+                      onChange={(range) => updatePersonDateRange(person.id, range)}
+                      className="w-full mt-1"
+                    />
+                  </div>
+                )}
               </div>
             </div>
           ))}

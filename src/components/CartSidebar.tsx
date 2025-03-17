@@ -1,6 +1,6 @@
 
 import * as React from "react";
-import { ShoppingCart, X, AlertCircle, ArrowRight, Trash } from "lucide-react";
+import { ShoppingCart, X, AlertCircle, ArrowRight, Trash, Edit, RefreshCw, User, Baby } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
@@ -18,6 +18,13 @@ import { Room } from "@/components/RoomCard";
 import { RoomDetailsData } from "@/components/RoomDetailsForm";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { 
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
+} from "@/components/ui/dialog";
 
 export interface CartItem {
   room: Room;
@@ -31,6 +38,7 @@ interface CartSidebarProps {
   onClearCart: () => void;
   onCheckoutClick: () => void;
   checkAvailability: () => Promise<boolean>;
+  onEditItem?: (id: string, details: RoomDetailsData) => void;
   className?: string;
 }
 
@@ -40,6 +48,7 @@ export function CartSidebar({
   onClearCart,
   onCheckoutClick,
   checkAvailability,
+  onEditItem,
   className,
 }: CartSidebarProps) {
   const [isOpen, setIsOpen] = React.useState(false);
@@ -93,6 +102,40 @@ export function CartSidebar({
     
     onCheckoutClick();
     setIsOpen(false);
+  };
+
+  const renderPersonIcons = (item: CartItem) => {
+    const { adults, children } = item.details;
+    const filledPersons = item.details.persons.filter(p => p.name).length;
+    
+    return (
+      <div className="flex flex-wrap gap-1 mt-2">
+        {Array.from({ length: adults }).map((_, i) => (
+          <div 
+            key={`adult-${i}`} 
+            className={cn(
+              "rounded-full p-1",
+              i < filledPersons ? "text-primary" : "text-muted-foreground/40"
+            )}
+            title={i < filledPersons ? "Vaga ocupada" : "Vaga disponível"}
+          >
+            <User className="h-4 w-4" />
+          </div>
+        ))}
+        {Array.from({ length: children }).map((_, i) => (
+          <div 
+            key={`child-${i}`} 
+            className={cn(
+              "rounded-full p-1",
+              adults + i < filledPersons ? "text-primary" : "text-muted-foreground/40"
+            )}
+            title={adults + i < filledPersons ? "Vaga ocupada" : "Vaga disponível"}
+          >
+            <Baby className="h-4 w-4" />
+          </div>
+        ))}
+      </div>
+    );
   };
 
   return (
@@ -149,23 +192,66 @@ export function CartSidebar({
                       !item.room.available && "border-destructive/50 bg-destructive/5"
                     )}
                   >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="font-medium">{item.room.name}</h3>
-                        <p className="text-sm text-muted-foreground mt-0.5">
-                          {item.details.adults} adulto{item.details.adults !== 1 && 's'}
-                          {item.details.children > 0 && `, ${item.details.children} criança${item.details.children !== 1 && 's'}`}
-                          {item.details.pets > 0 && `, ${item.details.pets} animal${item.details.pets !== 1 && 'is'}`}
-                        </p>
+                    <div className="flex gap-3">
+                      {/* Room image */}
+                      <div className="w-20 h-20 rounded-md overflow-hidden flex-shrink-0">
+                        <img 
+                          src={item.room.media[0].src} 
+                          alt={item.room.name}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={() => onRemoveItem(item.id)}
-                      >
-                        <Trash className="h-4 w-4" />
-                      </Button>
+                      
+                      <div className="flex-1">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h3 className="font-medium">{item.room.name}</h3>
+                            <p className="text-sm text-muted-foreground mt-0.5">
+                              {item.details.adults} adulto{item.details.adults !== 1 && 's'}
+                              {item.details.children > 0 && `, ${item.details.children} criança${item.details.children !== 1 && 's'}`}
+                              {item.details.pets > 0 && `, ${item.details.pets} animal${item.details.pets !== 1 && 'is'}`}
+                            </p>
+                          </div>
+                          <div className="flex gap-1">
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent>
+                                <DialogHeader>
+                                  <DialogTitle>Editar Reserva</DialogTitle>
+                                </DialogHeader>
+                                {/* Placeholder for edit form */}
+                                <div className="py-4">
+                                  {/* This would be replaced with actual form */}
+                                  <p className="text-sm text-muted-foreground mb-4">
+                                    Edição de reserva não implementada nesta versão.
+                                  </p>
+                                  <Button className="w-full">Salvar Alterações</Button>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                            
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              onClick={() => onRemoveItem(item.id)}
+                            >
+                              <Trash className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                        
+                        {/* Person indicators */}
+                        {renderPersonIcons(item)}
+                      </div>
                     </div>
                     
                     {!item.room.available && (
@@ -175,20 +261,20 @@ export function CartSidebar({
                     )}
                     
                     <div className="space-y-1.5">
-                      {item.details.persons.map((person, index) => (
-                        <div key={index} className="text-xs">
-                          <span className="font-medium">
-                            {person.name || `Hóspede ${index + 1}`}:
-                          </span>{" "}
-                          {person.dateRange.from && person.dateRange.to ? (
-                            <span>
-                              {format(person.dateRange.from, "dd/MM")} a {format(person.dateRange.to, "dd/MM")}
-                            </span>
-                          ) : (
-                            <span className="text-muted-foreground">Datas não definidas</span>
-                          )}
+                      {item.details.useIndividualDates ? (
+                        <div className="text-xs">
+                          <span className="font-medium">Datas individualizadas</span>
                         </div>
-                      ))}
+                      ) : item.details.persons[0]?.dateRange.from && item.details.persons[0]?.dateRange.to ? (
+                        <div className="text-xs">
+                          <span className="font-medium">Período: </span>
+                          {format(item.details.persons[0].dateRange.from, "dd/MM")} a {format(item.details.persons[0].dateRange.to, "dd/MM")}
+                        </div>
+                      ) : (
+                        <div className="text-xs text-muted-foreground">
+                          Datas não definidas
+                        </div>
+                      )}
                     </div>
                     
                     <div className="text-sm font-medium">
@@ -211,19 +297,21 @@ export function CartSidebar({
                 <Button
                   variant="outline"
                   size="sm"
-                  className="text-xs"
+                  className="text-xs flex gap-1"
                   onClick={onClearCart}
                 >
+                  <Trash className="h-3.5 w-3.5" />
                   Limpar
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="text-xs"
+                  className="text-xs flex gap-1"
                   onClick={refreshAvailability}
                   disabled={isLoading}
                 >
-                  Verificar disponibilidade
+                  <RefreshCw className={cn("h-3.5 w-3.5", isLoading && "animate-spin")} />
+                  Atualizar
                 </Button>
               </div>
               
