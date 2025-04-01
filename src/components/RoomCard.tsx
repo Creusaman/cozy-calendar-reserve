@@ -9,6 +9,7 @@ import { Amenities, Amenity } from "@/components/Amenities";
 import { RoomDetailsForm, RoomDetailsData } from "@/components/RoomDetailsForm";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { differenceInDays, format } from "date-fns";
 
 export interface DateRange {
   from: Date | undefined;
@@ -61,6 +62,26 @@ export function RoomCard({ room, onAddToCart, defaultDateRange }: RoomCardProps)
     setIsAnimating(false);
   };
 
+  // Calcular o número de noites e o preço total para o período selecionado
+  const calculatePriceDetails = () => {
+    if (defaultDateRange?.from && defaultDateRange?.to) {
+      const nights = differenceInDays(defaultDateRange.to, defaultDateRange.from);
+      const totalPrice = room.price * nights;
+      const formattedDateFrom = format(defaultDateRange.from, "dd/MM/yyyy");
+      const formattedDateTo = format(defaultDateRange.to, "dd/MM/yyyy");
+      
+      return {
+        nights,
+        totalPrice,
+        dateRange: `${formattedDateFrom} a ${formattedDateTo}`
+      };
+    }
+    
+    return null;
+  };
+  
+  const priceDetails = calculatePriceDetails();
+
   return (
     <Card 
       className={cn(
@@ -103,15 +124,31 @@ export function RoomCard({ room, onAddToCart, defaultDateRange }: RoomCardProps)
 
           <div className="space-y-3">
             <div>
-              <div className="text-2xl font-semibold">
-                R$ {room.price}
-                <span className="text-sm font-normal text-muted-foreground ml-1">
-                  / {room.priceUnit}
-                </span>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Para até {room.maxGuests} hóspedes
-              </p>
+              {priceDetails ? (
+                <div>
+                  <div className="text-2xl font-semibold">
+                    R$ {priceDetails.totalPrice}
+                    <span className="text-sm font-normal text-muted-foreground ml-1">
+                      / por {priceDetails.nights} {priceDetails.nights === 1 ? 'noite' : 'noites'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Para até {room.maxGuests} hóspedes de {priceDetails.dateRange}
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  <div className="text-2xl font-semibold">
+                    R$ {room.price}
+                    <span className="text-sm font-normal text-muted-foreground ml-1">
+                      / {room.priceUnit}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Para até {room.maxGuests} hóspedes
+                  </p>
+                </div>
+              )}
             </div>
 
             <Amenities 
