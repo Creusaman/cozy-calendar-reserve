@@ -8,6 +8,8 @@ import { RoomDetailsData } from "@/components/RoomDetailsForm";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import PromotionalBanner from "@/components/PromotionalBanner";
+import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
+import { Calendar, Users } from "lucide-react";
 
 const dummyRooms: Room[] = [
   {
@@ -132,6 +134,8 @@ const Index = () => {
   const [children, setChildren] = React.useState(0);
   const [cartItems, setCartItems] = React.useState<CartItem[]>([]);
   const [rooms, setRooms] = React.useState<Room[]>(dummyRooms);
+  const [stickyTop, setStickyTop] = React.useState(0);
+  const accommodationsRef = React.useRef<HTMLElement>(null);
 
   const handleAddToCart = (room: Room, details: RoomDetailsData) => {
     setCartItems([
@@ -184,9 +188,33 @@ const Index = () => {
     });
   };
 
+  // Atualizar a posição da barra lateral quando a página é rolada
+  React.useEffect(() => {
+    const handleScroll = () => {
+      if (accommodationsRef.current) {
+        const rect = accommodationsRef.current.getBoundingClientRect();
+        if (rect.top <= 0) {
+          setStickyTop(Math.abs(rect.top) + 20); // 20px é um espaço adicional
+          // Garantir que o elemento não ultrapasse o final da seção
+          const maxTop = accommodationsRef.current.clientHeight - document.querySelector('.sticky-filters')?.clientHeight;
+          if (stickyTop > maxTop) {
+            setStickyTop(maxTop as number);
+          }
+        } else {
+          setStickyTop(0);
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [accommodationsRef.current]);
+
+  const dateSelected = Boolean(dateRange.from && dateRange.to);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/30">
-      <header className="sticky top-0 z-10 backdrop-blur-sm bg-background/80 border-b">
+      <header className="sticky top-0 z-20 backdrop-blur-sm bg-background/80 border-b">
         <div className="container mx-auto py-4 px-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold">Elegante Hospedagem</h1>
           <CartSidebar
@@ -236,17 +264,77 @@ const Index = () => {
           </div>
         </section>
           
-        <section>
+        <section ref={accommodationsRef} className="relative">
           <h2 className="text-2xl font-medium mb-6">Acomodações disponíveis</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-6">
-            {rooms.map((room) => (
-              <RoomCard
-                key={room.id}
-                room={room}
-                onAddToCart={handleAddToCart}
-                defaultDateRange={dateRange}
-              />
-            ))}
+          
+          <div className="grid md:grid-cols-[280px_1fr] gap-6">
+            {/* Barra lateral fixa */}
+            <div 
+              className="sticky-filters hidden md:block" 
+              style={{ 
+                position: 'sticky', 
+                top: `${Math.max(20, stickyTop)}px`, 
+                height: 'fit-content',
+                transition: 'top 0.2s ease'
+              }}
+            >
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center">
+                    <Calendar className="mr-2 h-5 w-5 text-primary" />
+                    Filtros
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-5">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Período da estadia</label>
+                    <DateRangePicker 
+                      dateRange={dateRange}
+                      onChange={setDateRange}
+                      className="w-full"
+                    />
+                    {!dateSelected && (
+                      <p className="mt-2 text-xs text-amber-600 flex items-center">
+                        <Calendar className="h-3 w-3 mr-1" />
+                        Selecione as datas para ver os preços
+                      </p>
+                    )}
+                  </div>
+                  
+                  <div className="border-t pt-4">
+                    <label className="block text-sm font-medium mb-2 flex items-center">
+                      <Users className="mr-2 h-4 w-4 text-primary" />
+                      Hóspedes
+                    </label>
+                    <div className="space-y-3">
+                      <PersonCounter
+                        label="Adultos"
+                        value={adults}
+                        onChange={setAdults}
+                        min={1}
+                      />
+                      <PersonCounter
+                        label="Crianças"
+                        value={children}
+                        onChange={setChildren}
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            
+            {/* Grid de acomodações */}
+            <div className="grid md:grid-cols-1 lg:grid-cols-2 gap-6">
+              {rooms.map((room) => (
+                <RoomCard
+                  key={room.id}
+                  room={room}
+                  onAddToCart={handleAddToCart}
+                  defaultDateRange={dateRange}
+                />
+              ))}
+            </div>
           </div>
         </section>
       </main>

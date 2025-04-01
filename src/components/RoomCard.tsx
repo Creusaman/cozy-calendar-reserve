@@ -1,6 +1,6 @@
 
 import * as React from "react";
-import { Expand, X } from "lucide-react";
+import { Expand, X, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -81,6 +81,7 @@ export function RoomCard({ room, onAddToCart, defaultDateRange }: RoomCardProps)
   };
   
   const priceDetails = calculatePriceDetails();
+  const hasDateRange = Boolean(defaultDateRange?.from && defaultDateRange?.to);
 
   return (
     <Card 
@@ -124,29 +125,27 @@ export function RoomCard({ room, onAddToCart, defaultDateRange }: RoomCardProps)
 
           <div className="space-y-3">
             <div>
-              {priceDetails ? (
-                <div>
-                  <div className="text-2xl font-semibold">
-                    R$ {priceDetails.totalPrice}
-                    <span className="text-sm font-normal text-muted-foreground ml-1">
-                      / por {priceDetails.nights} {priceDetails.nights === 1 ? 'noite' : 'noites'}
-                    </span>
+              {hasDateRange ? (
+                priceDetails && (
+                  <div>
+                    <div className="text-2xl font-semibold">
+                      R$ {priceDetails.totalPrice}
+                      <span className="text-sm font-normal text-muted-foreground ml-1">
+                        / por {priceDetails.nights} {priceDetails.nights === 1 ? 'noite' : 'noites'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Para até {room.maxGuests} hóspedes de {priceDetails.dateRange}
+                    </p>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Para até {room.maxGuests} hóspedes de {priceDetails.dateRange}
-                  </p>
-                </div>
+                )
               ) : (
-                <div>
-                  <div className="text-2xl font-semibold">
-                    R$ {room.price}
-                    <span className="text-sm font-normal text-muted-foreground ml-1">
-                      / {room.priceUnit}
-                    </span>
+                <div className="flex items-center p-3 bg-muted/40 rounded-md text-muted-foreground">
+                  <Calendar className="h-5 w-5 mr-2 text-primary" />
+                  <div>
+                    <p className="text-sm font-medium">Selecione as datas</p>
+                    <p className="text-xs">Para ver os preços, selecione as datas de check-in e check-out</p>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Para até {room.maxGuests} hóspedes
-                  </p>
                 </div>
               )}
             </div>
