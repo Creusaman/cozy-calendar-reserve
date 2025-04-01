@@ -1,7 +1,7 @@
 
 import * as React from "react";
 import { format } from "date-fns";
-import { X, Check, Calendar, Users } from "lucide-react";
+import { X, Check, Calendar, Users, CreditCard, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -23,6 +23,7 @@ interface Person {
 interface RoomDetailsFormProps {
   onClose: () => void;
   onSubmit: (data: RoomDetailsData) => void;
+  onReserveDirect: (data: RoomDetailsData) => void;
   defaultDateRange?: DateRange;
 }
 
@@ -35,7 +36,7 @@ export interface RoomDetailsData {
   mainDateRange: DateRange;
 }
 
-export function RoomDetailsForm({ onClose, onSubmit, defaultDateRange }: RoomDetailsFormProps) {
+export function RoomDetailsForm({ onClose, onSubmit, onReserveDirect, defaultDateRange }: RoomDetailsFormProps) {
   const [adults, setAdults] = React.useState(2);
   const [children, setChildren] = React.useState(0);
   const [pets, setPets] = React.useState(0);
@@ -83,16 +84,25 @@ export function RoomDetailsForm({ onClose, onSubmit, defaultDateRange }: RoomDet
     );
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit({
+  const collectFormData = (): RoomDetailsData => {
+    return {
       adults,
       children,
       pets,
       persons: persons.slice(0, adults + children),
       useIndividualDates,
       mainDateRange
-    });
+    };
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit(collectFormData());
+  };
+  
+  const handleReserveDirect = (e: React.MouseEvent) => {
+    e.preventDefault();
+    onReserveDirect(collectFormData());
   };
 
   // Update all persons' date ranges when main date range changes and individual dates are not used
@@ -151,31 +161,33 @@ export function RoomDetailsForm({ onClose, onSubmit, defaultDateRange }: RoomDet
           </div>
         </div>
         
-        <PersonCounter
-          label="Adultos"
-          value={adults}
-          onChange={setAdults}
-          min={1}
-          max={8}
-        />
-        <PersonCounter
-          label="Crianças"
-          value={children}
-          onChange={setChildren}
-          max={6}
-        />
-        <PersonCounter
-          label="Animais"
-          value={pets}
-          onChange={setPets}
-          max={3}
-        />
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <PersonCounter
+            label="Adultos"
+            value={adults}
+            onChange={setAdults}
+            min={1}
+            max={8}
+          />
+          <PersonCounter
+            label="Crianças"
+            value={children}
+            onChange={setChildren}
+            max={6}
+          />
+          <PersonCounter
+            label="Animais"
+            value={pets}
+            onChange={setPets}
+            max={3}
+          />
+        </div>
       </div>
 
       {(adults + children > 0) && (
         <div className="border-t pt-4">
           <h3 className="text-sm font-medium mb-3">Detalhes dos hóspedes</h3>
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {persons.map((person, index) => (
               <div key={person.id} className="p-3 border rounded-lg bg-muted/30">
                 <div className="flex justify-between items-center mb-2">
@@ -222,19 +234,33 @@ export function RoomDetailsForm({ onClose, onSubmit, defaultDateRange }: RoomDet
         </div>
       )}
 
-      <div className="flex gap-2">
+      <div className="grid grid-cols-2 gap-2">
         <Button
           type="button"
           variant="outline"
           onClick={onClose}
-          className="flex-1"
+          className="w-full"
         >
           Cancelar
         </Button>
-        <Button type="submit" className="flex-1">
+        <Button 
+          type="submit" 
+          className="w-full"
+        >
+          <ShoppingCart className="h-4 w-4 mr-2" />
           Adicionar ao carrinho
         </Button>
       </div>
+      
+      <Button 
+        type="button"
+        onClick={handleReserveDirect}
+        className="w-full"
+        variant="default"
+      >
+        <CreditCard className="h-4 w-4 mr-2" />
+        Reservar agora
+      </Button>
     </form>
   );
 }

@@ -136,6 +136,7 @@ const Index = () => {
   const [rooms, setRooms] = React.useState<Room[]>(dummyRooms);
   const [stickyTop, setStickyTop] = React.useState(0);
   const accommodationsRef = React.useRef<HTMLElement>(null);
+  const sidebarRef = React.useRef<HTMLDivElement>(null);
 
   const handleAddToCart = (room: Room, details: RoomDetailsData) => {
     setCartItems([
@@ -146,6 +147,24 @@ const Index = () => {
         id: `${room.id}-${Date.now()}`,
       },
     ]);
+  };
+
+  const handleReserveDirect = (room: Room, details: RoomDetailsData) => {
+    // First add to cart
+    const newItem = {
+      room,
+      details,
+      id: `${room.id}-${Date.now()}`,
+    };
+    
+    setCartItems([...cartItems, newItem]);
+    
+    // Then simulate checkout
+    toast.success("Redirecionando para o checkout...");
+    setTimeout(() => {
+      navigate("/");
+      toast.info("Funcionalidade de reserva direta não implementada nesta versão");
+    }, 1500);
   };
 
   const handleRemoveFromCart = (id: string) => {
@@ -188,27 +207,45 @@ const Index = () => {
     });
   };
 
-  // Atualizar a posição da barra lateral quando a página é rolada
+  // Update the sidebar position when scrolling
   React.useEffect(() => {
     const handleScroll = () => {
-      if (accommodationsRef.current) {
-        const rect = accommodationsRef.current.getBoundingClientRect();
-        if (rect.top <= 0) {
-          setStickyTop(Math.abs(rect.top) + 20); // 20px é um espaço adicional
-          // Garantir que o elemento não ultrapasse o final da seção
-          const maxTop = accommodationsRef.current.clientHeight - document.querySelector('.sticky-filters')?.clientHeight;
-          if (stickyTop > maxTop) {
-            setStickyTop(maxTop as number);
-          }
+      if (!accommodationsRef.current || !sidebarRef.current) return;
+      
+      const sectionRect = accommodationsRef.current.getBoundingClientRect();
+      const sidebarHeight = sidebarRef.current.offsetHeight;
+      const viewportHeight = window.innerHeight;
+      
+      // Calculate section boundaries
+      const sectionTop = sectionRect.top;
+      const sectionBottom = sectionRect.bottom;
+      
+      // Calculate the maximum position where sidebar can be positioned
+      // without overflowing out of the section
+      const maxPositionFromTop = sectionBottom - sidebarHeight;
+      
+      if (sectionTop <= 0) {
+        // Section is scrolled up at least to the top of viewport
+        
+        if (maxPositionFromTop <= 0) {
+          // Sidebar is taller than remaining section height, so pin it to bottom
+          setStickyTop(Math.abs(sectionTop) + (maxPositionFromTop));
         } else {
-          setStickyTop(0);
+          // Normal sticky behavior, pin to top with padding
+          setStickyTop(Math.abs(sectionTop) + 20);
         }
+      } else {
+        // Section is below viewport top
+        setStickyTop(0);
       }
     };
 
     window.addEventListener('scroll', handleScroll);
+    // Initial positioning
+    handleScroll();
+    
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [accommodationsRef.current]);
+  }, [accommodationsRef.current, sidebarRef.current]);
 
   const dateSelected = Boolean(dateRange.from && dateRange.to);
 
@@ -270,15 +307,18 @@ const Index = () => {
           <div className="grid md:grid-cols-[280px_1fr] gap-6">
             {/* Barra lateral fixa */}
             <div 
+              ref={sidebarRef}
               className="sticky-filters hidden md:block" 
               style={{ 
-                position: 'sticky', 
-                top: `${Math.max(20, stickyTop)}px`, 
+                position: 'sticky',
+                top: `${Math.max(20, stickyTop)}px`,
                 height: 'fit-content',
+                maxHeight: 'calc(100vh - 40px)',
+                overflowY: 'auto',
                 transition: 'top 0.2s ease'
               }}
             >
-              <Card>
+              <Card className="sticky-sidebar">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg flex items-center">
                     <Calendar className="mr-2 h-5 w-5 text-primary" />
@@ -331,6 +371,7 @@ const Index = () => {
                   key={room.id}
                   room={room}
                   onAddToCart={handleAddToCart}
+                  onReserveDirect={handleReserveDirect}
                   defaultDateRange={dateRange}
                 />
               ))}

@@ -136,4 +136,27 @@
   .step-item.active .step-label {
     @apply text-foreground;
   }
+  
+  /* Sticky sidebar styles */
+  .sticky-sidebar {
+    @apply h-auto transition-all duration-300;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+  }
+  
+  .sticky-sidebar::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .sticky-sidebar::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  
+  .sticky-sidebar::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/20 rounded-full;
+  }
+  
+  .sticky-sidebar::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/30;
+  }
 }
