@@ -26,18 +26,12 @@ export interface Room {
   amenities: Amenity[];
 }
 
-interface DateRange {
-  from: Date | undefined;
-  to: Date | undefined;
-}
-
 interface RoomCardProps {
   room: Room;
   onAddToCart: (room: Room, details: RoomDetailsData) => void;
-  globalDateRange?: DateRange;
 }
 
-export function RoomCard({ room, onAddToCart, globalDateRange }: RoomCardProps) {
+export function RoomCard({ room, onAddToCart }: RoomCardProps) {
   const [expanded, setExpanded] = React.useState(false);
   const [isAnimating, setIsAnimating] = React.useState(false);
 
@@ -126,8 +120,6 @@ export function RoomCard({ room, onAddToCart, globalDateRange }: RoomCardProps) 
             <RoomDetailsForm
               onClose={handleCollapse}
               onSubmit={handleAddToCart}
-              globalDateRange={globalDateRange}
-              maxGuests={room.maxGuests}
             />
           </div>
         ) : null}
