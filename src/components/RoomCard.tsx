@@ -35,11 +35,11 @@ export interface Room {
 interface RoomCardProps {
   room: Room;
   onAddToCart: (room: Room, details: RoomDetailsData) => void;
-  onReserveDirect: (room: Room, details: RoomDetailsData) => void;
+  onDirectCheckout?: (room: Room, details: RoomDetailsData) => void;
   defaultDateRange?: DateRange;
 }
 
-export function RoomCard({ room, onAddToCart, onReserveDirect, defaultDateRange }: RoomCardProps) {
+export function RoomCard({ room, onAddToCart, onDirectCheckout, defaultDateRange }: RoomCardProps) {
   const [expanded, setExpanded] = React.useState(false);
   const [isAnimating, setIsAnimating] = React.useState(false);
 
@@ -58,11 +58,12 @@ export function RoomCard({ room, onAddToCart, onReserveDirect, defaultDateRange 
     handleCollapse();
     toast.success("Acomodação adicionada ao carrinho");
   };
-  
-  const handleReserveDirect = (details: RoomDetailsData) => {
-    onReserveDirect(room, details);
-    handleCollapse();
-    toast.success("Processando sua reserva...");
+
+  const handleDirectCheckout = (details: RoomDetailsData) => {
+    if (onDirectCheckout) {
+      onDirectCheckout(room, details);
+      handleCollapse();
+    }
   };
 
   const handleAnimationEnd = () => {
@@ -116,95 +117,75 @@ export function RoomCard({ room, onAddToCart, onReserveDirect, defaultDateRange 
         )}
       </div>
 
-      <CardContent className={cn("p-5", expanded ? "" : "")}>
-        <div className={expanded ? "md:grid md:grid-cols-2 md:gap-6 mb-6" : "space-y-4"}>
-          <div className="space-y-4">
+      <CardContent className={cn("p-5", expanded ? "md:grid md:grid-cols-2 md:gap-6" : "")}>
+        <div className="space-y-4">
+          <div>
+            <div className="flex justify-between items-start mb-1">
+              <h3 className="text-xl font-medium">{room.name}</h3>
+              <Badge variant={room.available ? "outline" : "secondary"} className="ml-2">
+                {room.available ? "Disponível" : "Indisponível"}
+              </Badge>
+            </div>
+            <p className="text-muted-foreground text-sm line-clamp-2">
+              {room.description}
+            </p>
+          </div>
+
+          <div className="space-y-3">
             <div>
-              <div className="flex justify-between items-start mb-1">
-                <h3 className="text-xl font-medium">{room.name}</h3>
-                <Badge variant={room.available ? "outline" : "secondary"} className="ml-2">
-                  {room.available ? "Disponível" : "Indisponível"}
-                </Badge>
-              </div>
-              <p className="text-muted-foreground text-sm line-clamp-2">
-                {room.description}
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              <div>
-                {hasDateRange ? (
-                  priceDetails && (
-                    <div>
-                      <div className="text-2xl font-semibold">
-                        R$ {priceDetails.totalPrice}
-                        <span className="text-sm font-normal text-muted-foreground ml-1">
-                          / por {priceDetails.nights} {priceDetails.nights === 1 ? 'noite' : 'noites'}
-                        </span>
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        Para até {room.maxGuests} hóspedes de {priceDetails.dateRange}
-                      </p>
+              {hasDateRange ? (
+                priceDetails && (
+                  <div>
+                    <div className="text-2xl font-semibold">
+                      R$ {priceDetails.totalPrice}
+                      <span className="text-sm font-normal text-muted-foreground ml-1">
+                        / por {priceDetails.nights} {priceDetails.nights === 1 ? 'noite' : 'noites'}
+                      </span>
                     </div>
-                  )
-                ) : (
-                  <div className="flex items-center p-3 bg-muted/40 rounded-md text-muted-foreground">
-                    <Calendar className="h-5 w-5 mr-2 text-primary" />
-                    <div>
-                      <p className="text-sm font-medium">Selecione as datas</p>
-                      <p className="text-xs">Para ver os preços, selecione as datas de check-in e check-out</p>
-                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Para até {room.maxGuests} hóspedes de {priceDetails.dateRange}
+                    </p>
                   </div>
-                )}
-              </div>
-
-              <Amenities 
-                amenities={room.amenities} 
-                compact={!expanded}
-              />
+                )
+              ) : (
+                <div className="flex items-center p-3 bg-muted/40 rounded-md text-muted-foreground">
+                  <Calendar className="h-5 w-5 mr-2 text-primary" />
+                  <div>
+                    <p className="text-sm font-medium">Selecione as datas</p>
+                    <p className="text-xs">Para ver os preços, selecione as datas de check-in e check-out</p>
+                  </div>
+                </div>
+              )}
             </div>
+
+            <Amenities 
+              amenities={room.amenities} 
+              compact={!expanded}
+            />
           </div>
-
-          {expanded && (
-            <div className="mt-4 md:mt-0">
-              <RoomDetailsForm
-                onClose={handleCollapse}
-                onSubmit={handleAddToCart}
-                onReserveDirect={handleReserveDirect}
-                defaultDateRange={defaultDateRange}
-              />
-            </div>
-          )}
         </div>
-        
-        {/* Guest details section in full width when expanded */}
-        {expanded && (
-          <div className="border-t pt-6">
-            {/* Content will be rendered by RoomDetailsForm */}
+
+        {expanded ? (
+          <div className="mt-4 md:mt-0">
+            <RoomDetailsForm
+              onClose={handleCollapse}
+              onSubmit={handleAddToCart}
+              onDirectCheckout={handleDirectCheckout}
+              defaultDateRange={defaultDateRange}
+            />
           </div>
-        )}
+        ) : null}
       </CardContent>
 
       {!expanded && (
         <CardFooter className="px-5 pb-5 pt-0">
-          <div className="flex gap-2 w-full">
-            <Button 
-              className="flex-1"
-              variant="outline"
-              onClick={handleExpand}
-              disabled={!room.available}
-            >
-              {room.available ? "Adicionar ao Carrinho" : "Indisponível"}
-            </Button>
-            <Button 
-              className="flex-1"
-              onClick={handleExpand}
-              disabled={!room.available}
-            >
-              <CreditCard className="mr-2 h-4 w-4" />
-              {room.available ? "Reservar" : "Indisponível"}
-            </Button>
-          </div>
+          <Button 
+            className="w-full"
+            onClick={handleExpand}
+            disabled={!room.available}
+          >
+            {room.available ? "Reservar" : "Indisponível"}
+          </Button>
         </CardFooter>
       )}
     </Card>

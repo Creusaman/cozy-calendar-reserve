@@ -149,24 +149,6 @@ const Index = () => {
     ]);
   };
 
-  const handleReserveDirect = (room: Room, details: RoomDetailsData) => {
-    // First add to cart
-    const newItem = {
-      room,
-      details,
-      id: `${room.id}-${Date.now()}`,
-    };
-    
-    setCartItems([...cartItems, newItem]);
-    
-    // Then simulate checkout
-    toast.success("Redirecionando para o checkout...");
-    setTimeout(() => {
-      navigate("/");
-      toast.info("Funcionalidade de reserva direta não implementada nesta versão");
-    }, 1500);
-  };
-
   const handleRemoveFromCart = (id: string) => {
     setCartItems(cartItems.filter((item) => item.id !== id));
   };
@@ -181,6 +163,23 @@ const Index = () => {
     setTimeout(() => {
       navigate("/");
       toast.info("Funcionalidade de checkout não implementada nesta versão");
+    }, 1500);
+  };
+
+  const handleDirectCheckout = (room: Room, details: RoomDetailsData) => {
+    // Add to cart temporarily and go straight to checkout
+    const tempItem = {
+      room,
+      details,
+      id: `${room.id}-${Date.now()}`,
+    };
+    
+    setCartItems([...cartItems, tempItem]);
+    
+    toast.success("Redirecionando para o checkout...");
+    setTimeout(() => {
+      navigate("/");
+      toast.info("Funcionalidade de checkout direto não implementada nesta versão");
     }, 1500);
   };
 
@@ -207,43 +206,40 @@ const Index = () => {
     });
   };
 
-  // Update the sidebar position when scrolling
+  // Atualizar a posição da barra lateral quando a página é rolada
   React.useEffect(() => {
     const handleScroll = () => {
-      if (!accommodationsRef.current || !sidebarRef.current) return;
-      
-      const sectionRect = accommodationsRef.current.getBoundingClientRect();
-      const sidebarHeight = sidebarRef.current.offsetHeight;
-      const viewportHeight = window.innerHeight;
-      
-      // Calculate section boundaries
-      const sectionTop = sectionRect.top;
-      const sectionBottom = sectionRect.bottom;
-      
-      // Calculate the maximum position where sidebar can be positioned
-      // without overflowing out of the section
-      const maxPositionFromTop = sectionBottom - sidebarHeight;
-      
-      if (sectionTop <= 0) {
-        // Section is scrolled up at least to the top of viewport
+      if (accommodationsRef.current && sidebarRef.current) {
+        const accommodationsRect = accommodationsRef.current.getBoundingClientRect();
+        const sidebarHeight = sidebarRef.current.offsetHeight;
+        const viewportHeight = window.innerHeight;
         
-        if (maxPositionFromTop <= 0) {
-          // Sidebar is taller than remaining section height, so pin it to bottom
-          setStickyTop(Math.abs(sectionTop) + (maxPositionFromTop));
+        // Altura máxima que o sidebar pode ter
+        const maxSidebarHeight = viewportHeight - 20; // 20px for spacing
+        
+        if (accommodationsRect.top <= 0) {
+          // Distância que ja rolamos para baixo da seção de acomodações
+          const scrolledDistance = Math.abs(accommodationsRect.top);
+          
+          // A altura total da seção de acomodações
+          const accommodationsHeight = accommodationsRef.current.clientHeight;
+          
+          // Garantir que o sidebar não ultrapasse o final da seção
+          if (scrolledDistance + sidebarHeight > accommodationsHeight) {
+            // Manter o sidebar alinhado com o fim da seção
+            setStickyTop(accommodationsHeight - sidebarHeight);
+          } else {
+            // Manter o sidebar fixo enquanto rola
+            setStickyTop(scrolledDistance);
+          }
         } else {
-          // Normal sticky behavior, pin to top with padding
-          setStickyTop(Math.abs(sectionTop) + 20);
+          // Se estiver acima da seção, resetar para o topo
+          setStickyTop(0);
         }
-      } else {
-        // Section is below viewport top
-        setStickyTop(0);
       }
     };
 
     window.addEventListener('scroll', handleScroll);
-    // Initial positioning
-    handleScroll();
-    
     return () => window.removeEventListener('scroll', handleScroll);
   }, [accommodationsRef.current, sidebarRef.current]);
 
@@ -308,24 +304,24 @@ const Index = () => {
             {/* Barra lateral fixa */}
             <div 
               ref={sidebarRef}
-              className="sticky-filters hidden md:block" 
+              className="sticky-filters hidden md:block overflow-auto" 
               style={{ 
-                position: 'sticky',
-                top: `${Math.max(20, stickyTop)}px`,
-                height: 'fit-content',
+                position: 'sticky', 
+                top: `20px`, 
+                height: 'calc(100vh - 40px)',
                 maxHeight: 'calc(100vh - 40px)',
-                overflowY: 'auto',
-                transition: 'top 0.2s ease'
+                transform: `translateY(${stickyTop}px)`,
+                transition: 'transform 0.2s ease'
               }}
             >
-              <Card className="sticky-sidebar">
+              <Card className="h-full flex flex-col">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg flex items-center">
                     <Calendar className="mr-2 h-5 w-5 text-primary" />
                     Filtros
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-5">
+                <CardContent className="space-y-5 flex-grow">
                   <div>
                     <label className="block text-sm font-medium mb-2">Período da estadia</label>
                     <DateRangePicker 
@@ -371,7 +367,7 @@ const Index = () => {
                   key={room.id}
                   room={room}
                   onAddToCart={handleAddToCart}
-                  onReserveDirect={handleReserveDirect}
+                  onDirectCheckout={handleDirectCheckout}
                   defaultDateRange={dateRange}
                 />
               ))}
