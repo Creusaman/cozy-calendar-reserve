@@ -10,6 +10,11 @@ import { RoomDetailsForm, RoomDetailsData } from "@/components/RoomDetailsForm";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
+export interface DateRange {
+  from: Date | undefined;
+  to: Date | undefined;
+}
+
 export interface Room {
   id: string;
   name: string;
@@ -29,9 +34,10 @@ export interface Room {
 interface RoomCardProps {
   room: Room;
   onAddToCart: (room: Room, details: RoomDetailsData) => void;
+  defaultDateRange?: DateRange;
 }
 
-export function RoomCard({ room, onAddToCart }: RoomCardProps) {
+export function RoomCard({ room, onAddToCart, defaultDateRange }: RoomCardProps) {
   const [expanded, setExpanded] = React.useState(false);
   const [isAnimating, setIsAnimating] = React.useState(false);
 
@@ -120,6 +126,7 @@ export function RoomCard({ room, onAddToCart }: RoomCardProps) {
             <RoomDetailsForm
               onClose={handleCollapse}
               onSubmit={handleAddToCart}
+              defaultDateRange={defaultDateRange}
             />
           </div>
         ) : null}

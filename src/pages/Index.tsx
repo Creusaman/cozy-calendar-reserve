@@ -1,17 +1,13 @@
 
 import * as React from "react";
 import { DateRangePicker } from "@/components/DateRangePicker";
-import { RoomCard, Room } from "@/components/RoomCard";
+import { RoomCard, Room, DateRange } from "@/components/RoomCard";
 import { PersonCounter } from "@/components/PersonCounter";
 import { CartSidebar, CartItem } from "@/components/CartSidebar";
 import { RoomDetailsData } from "@/components/RoomDetailsForm";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-
-interface DateRange {
-  from: Date | undefined;
-  to: Date | undefined;
-}
+import PromotionalBanner from "@/components/PromotionalBanner";
 
 const dummyRooms: Room[] = [
   {
@@ -204,6 +200,9 @@ const Index = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
+        {/* Promotional Banner */}
+        <PromotionalBanner />
+        
         <section className="mb-12 max-w-4xl mx-auto">
           <div className="glass-card rounded-xl p-6 md:p-8 space-y-6 animate-fade-in">
             <h2 className="text-2xl font-medium text-center mb-6">Encontre a acomodação perfeita</h2>
@@ -245,6 +244,7 @@ const Index = () => {
                 key={room.id}
                 room={room}
                 onAddToCart={handleAddToCart}
+                defaultDateRange={dateRange}
               />
             ))}
           </div>

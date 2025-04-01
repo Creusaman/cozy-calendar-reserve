@@ -1,11 +1,13 @@
 
 import * as React from "react";
 import { format } from "date-fns";
-import { X } from "lucide-react";
+import { X, Check, Calendar, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { DateRangePicker } from "@/components/DateRangePicker";
 import { PersonCounter } from "@/components/PersonCounter";
+import { Label } from "@/components/ui/label";
 
 interface DateRange {
   from: Date | undefined;
@@ -21,6 +23,7 @@ interface Person {
 interface RoomDetailsFormProps {
   onClose: () => void;
   onSubmit: (data: RoomDetailsData) => void;
+  defaultDateRange?: DateRange;
 }
 
 export interface RoomDetailsData {
@@ -28,15 +31,21 @@ export interface RoomDetailsData {
   children: number;
   pets: number;
   persons: Person[];
+  useIndividualDates: boolean;
+  mainDateRange: DateRange;
 }
 
-export function RoomDetailsForm({ onClose, onSubmit }: RoomDetailsFormProps) {
+export function RoomDetailsForm({ onClose, onSubmit, defaultDateRange }: RoomDetailsFormProps) {
   const [adults, setAdults] = React.useState(2);
   const [children, setChildren] = React.useState(0);
   const [pets, setPets] = React.useState(0);
+  const [useIndividualDates, setUseIndividualDates] = React.useState(false);
+  const [mainDateRange, setMainDateRange] = React.useState<DateRange>(
+    defaultDateRange || { from: undefined, to: undefined }
+  );
   const [persons, setPersons] = React.useState<Person[]>([
-    { id: "1", name: "", dateRange: { from: undefined, to: undefined } },
-    { id: "2", name: "", dateRange: { from: undefined, to: undefined } },
+    { id: "1", name: "", dateRange: { ...mainDateRange } },
+    { id: "2", name: "", dateRange: { ...mainDateRange } },
   ]);
 
   const addPerson = () => {
@@ -46,7 +55,7 @@ export function RoomDetailsForm({ onClose, onSubmit }: RoomDetailsFormProps) {
         { 
           id: Date.now().toString(),
           name: "",
-          dateRange: { from: undefined, to: undefined }
+          dateRange: { ...mainDateRange }
         }
       ]);
     }
@@ -80,12 +89,24 @@ export function RoomDetailsForm({ onClose, onSubmit }: RoomDetailsFormProps) {
       adults,
       children,
       pets,
-      persons: persons.slice(0, adults + children)
+      persons: persons.slice(0, adults + children),
+      useIndividualDates,
+      mainDateRange
     });
   };
 
+  // Update all persons' date ranges when main date range changes and individual dates are not used
   React.useEffect(() => {
-    // Adjust persons array when adults or children change
+    if (!useIndividualDates) {
+      setPersons(persons.map(person => ({
+        ...person,
+        dateRange: { ...mainDateRange }
+      })));
+    }
+  }, [mainDateRange, useIndividualDates]);
+
+  // Adjust persons array when adults or children change
+  React.useEffect(() => {
     const totalPeople = adults + children;
     
     if (persons.length > totalPeople) {
@@ -98,7 +119,7 @@ export function RoomDetailsForm({ onClose, onSubmit }: RoomDetailsFormProps) {
         newPersons.push({
           id: Date.now().toString() + i,
           name: "",
-          dateRange: { from: undefined, to: undefined }
+          dateRange: useIndividualDates ? { from: undefined, to: undefined } : { ...mainDateRange }
         });
       }
       setPersons(newPersons);
@@ -108,6 +129,28 @@ export function RoomDetailsForm({ onClose, onSubmit }: RoomDetailsFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-6 p-1">
       <div className="space-y-4">
+        <div className="p-3 border rounded-lg bg-muted/30">
+          <div className="mb-3">
+            <Label className="text-sm">Período da estadia</Label>
+            <DateRangePicker
+              dateRange={mainDateRange}
+              onChange={setMainDateRange}
+              className="w-full mt-1"
+            />
+          </div>
+          
+          <div className="flex items-center space-x-2 mt-4">
+            <Switch
+              id="individual-dates"
+              checked={useIndividualDates}
+              onCheckedChange={setUseIndividualDates}
+            />
+            <Label htmlFor="individual-dates" className="text-sm cursor-pointer">
+              Individualizar datas de check-in e check-out
+            </Label>
+          </div>
+        </div>
+        
         <PersonCounter
           label="Adultos"
           value={adults}
@@ -129,50 +172,55 @@ export function RoomDetailsForm({ onClose, onSubmit }: RoomDetailsFormProps) {
         />
       </div>
 
-      <div className="border-t pt-4">
-        <h3 className="text-sm font-medium mb-3">Detalhes dos hóspedes</h3>
-        <div className="space-y-4">
-          {persons.map((person, index) => (
-            <div key={person.id} className="p-3 border rounded-lg bg-muted/30">
-              <div className="flex justify-between items-center mb-2">
-                <h4 className="text-sm">
-                  {index === 0 ? "Hóspede principal" : `Hóspede ${index + 1}`}
-                </h4>
-                {persons.length > 1 && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7"
-                    onClick={() => removePerson(person.id)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-              <div className="space-y-3">
-                <div>
-                  <label className="text-xs text-muted-foreground">Nome</label>
-                  <Input
-                    value={person.name}
-                    onChange={(e) => updatePersonName(person.id, e.target.value)}
-                    placeholder="Nome do hóspede"
-                    className="h-9 mt-1"
-                  />
+      {(adults + children > 0) && (
+        <div className="border-t pt-4">
+          <h3 className="text-sm font-medium mb-3">Detalhes dos hóspedes</h3>
+          <div className="space-y-4">
+            {persons.map((person, index) => (
+              <div key={person.id} className="p-3 border rounded-lg bg-muted/30">
+                <div className="flex justify-between items-center mb-2">
+                  <h4 className="text-sm">
+                    {index === 0 ? "Hóspede principal" : `Hóspede ${index + 1}`}
+                  </h4>
+                  {persons.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => removePerson(person.id)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
-                <div>
-                  <label className="text-xs text-muted-foreground">Período da estadia</label>
-                  <DateRangePicker
-                    dateRange={person.dateRange}
-                    onChange={(range) => updatePersonDateRange(person.id, range)}
-                    className="w-full mt-1"
-                  />
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs text-muted-foreground">Nome</label>
+                    <Input
+                      value={person.name}
+                      onChange={(e) => updatePersonName(person.id, e.target.value)}
+                      placeholder="Nome do hóspede"
+                      className="h-9 mt-1"
+                    />
+                  </div>
+                  
+                  {useIndividualDates && (
+                    <div>
+                      <label className="text-xs text-muted-foreground">Período da estadia</label>
+                      <DateRangePicker
+                        dateRange={person.dateRange}
+                        onChange={(range) => updatePersonDateRange(person.id, range)}
+                        className="w-full mt-1"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="flex gap-2">
         <Button
