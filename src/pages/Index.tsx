@@ -136,7 +136,6 @@ const Index = () => {
   const [rooms, setRooms] = React.useState<Room[]>(dummyRooms);
   const [stickyTop, setStickyTop] = React.useState(0);
   const accommodationsRef = React.useRef<HTMLElement>(null);
-  const sidebarRef = React.useRef<HTMLDivElement>(null);
 
   const handleAddToCart = (room: Room, details: RoomDetailsData) => {
     setCartItems([
@@ -166,23 +165,6 @@ const Index = () => {
     }, 1500);
   };
 
-  const handleDirectCheckout = (room: Room, details: RoomDetailsData) => {
-    // Add to cart temporarily and go straight to checkout
-    const tempItem = {
-      room,
-      details,
-      id: `${room.id}-${Date.now()}`,
-    };
-    
-    setCartItems([...cartItems, tempItem]);
-    
-    toast.success("Redirecionando para o checkout...");
-    setTimeout(() => {
-      navigate("/");
-      toast.info("Funcionalidade de checkout direto não implementada nesta versão");
-    }, 1500);
-  };
-
   const checkAvailability = async (): Promise<boolean> => {
     // Simulate an API call to check availability
     return new Promise((resolve) => {
@@ -209,31 +191,16 @@ const Index = () => {
   // Atualizar a posição da barra lateral quando a página é rolada
   React.useEffect(() => {
     const handleScroll = () => {
-      if (accommodationsRef.current && sidebarRef.current) {
-        const accommodationsRect = accommodationsRef.current.getBoundingClientRect();
-        const sidebarHeight = sidebarRef.current.offsetHeight;
-        const viewportHeight = window.innerHeight;
-        
-        // Altura máxima que o sidebar pode ter
-        const maxSidebarHeight = viewportHeight - 20; // 20px for spacing
-        
-        if (accommodationsRect.top <= 0) {
-          // Distância que ja rolamos para baixo da seção de acomodações
-          const scrolledDistance = Math.abs(accommodationsRect.top);
-          
-          // A altura total da seção de acomodações
-          const accommodationsHeight = accommodationsRef.current.clientHeight;
-          
-          // Garantir que o sidebar não ultrapasse o final da seção
-          if (scrolledDistance + sidebarHeight > accommodationsHeight) {
-            // Manter o sidebar alinhado com o fim da seção
-            setStickyTop(accommodationsHeight - sidebarHeight);
-          } else {
-            // Manter o sidebar fixo enquanto rola
-            setStickyTop(scrolledDistance);
+      if (accommodationsRef.current) {
+        const rect = accommodationsRef.current.getBoundingClientRect();
+        if (rect.top <= 0) {
+          setStickyTop(Math.abs(rect.top) + 20); // 20px é um espaço adicional
+          // Garantir que o elemento não ultrapasse o final da seção
+          const maxTop = accommodationsRef.current.clientHeight - document.querySelector('.sticky-filters')?.clientHeight;
+          if (stickyTop > maxTop) {
+            setStickyTop(maxTop as number);
           }
         } else {
-          // Se estiver acima da seção, resetar para o topo
           setStickyTop(0);
         }
       }
@@ -241,7 +208,7 @@ const Index = () => {
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [accommodationsRef.current, sidebarRef.current]);
+  }, [accommodationsRef.current]);
 
   const dateSelected = Boolean(dateRange.from && dateRange.to);
 
@@ -303,25 +270,22 @@ const Index = () => {
           <div className="grid md:grid-cols-[280px_1fr] gap-6">
             {/* Barra lateral fixa */}
             <div 
-              ref={sidebarRef}
-              className="sticky-filters hidden md:block overflow-auto" 
+              className="sticky-filters hidden md:block" 
               style={{ 
                 position: 'sticky', 
-                top: `20px`, 
-                height: 'calc(100vh - 40px)',
-                maxHeight: 'calc(100vh - 40px)',
-                transform: `translateY(${stickyTop}px)`,
-                transition: 'transform 0.2s ease'
+                top: `${Math.max(20, stickyTop)}px`, 
+                height: 'fit-content',
+                transition: 'top 0.2s ease'
               }}
             >
-              <Card className="h-full flex flex-col">
+              <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg flex items-center">
                     <Calendar className="mr-2 h-5 w-5 text-primary" />
                     Filtros
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-5 flex-grow">
+                <CardContent className="space-y-5">
                   <div>
                     <label className="block text-sm font-medium mb-2">Período da estadia</label>
                     <DateRangePicker 
@@ -367,7 +331,6 @@ const Index = () => {
                   key={room.id}
                   room={room}
                   onAddToCart={handleAddToCart}
-                  onDirectCheckout={handleDirectCheckout}
                   defaultDateRange={dateRange}
                 />
               ))}

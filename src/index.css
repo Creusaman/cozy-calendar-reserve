@@ -136,23 +136,4 @@
   .step-item.active .step-label {
     @apply text-foreground;
   }
-  
-  /* Floating label styles */
-  .form-floating {
-    @apply relative;
-  }
-  
-  .form-floating input:focus ~ label,
-  .form-floating input:not(:placeholder-shown) ~ label {
-    @apply transform -translate-y-4 scale-75 text-primary;
-  }
-  
-  .form-floating label {
-    @apply absolute left-3 top-1/2 -translate-y-1/2 transition-all duration-200 text-muted-foreground;
-  }
-  
-  /* Fixed-height sidebar */
-  .sticky-sidebar {
-    @apply h-[calc(100vh-40px)] overflow-auto;
-  }
 }

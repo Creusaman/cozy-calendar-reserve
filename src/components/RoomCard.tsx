@@ -1,6 +1,6 @@
 
 import * as React from "react";
-import { Expand, X, Calendar, CreditCard } from "lucide-react";
+import { Expand, X, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -35,11 +35,10 @@ export interface Room {
 interface RoomCardProps {
   room: Room;
   onAddToCart: (room: Room, details: RoomDetailsData) => void;
-  onDirectCheckout?: (room: Room, details: RoomDetailsData) => void;
   defaultDateRange?: DateRange;
 }
 
-export function RoomCard({ room, onAddToCart, onDirectCheckout, defaultDateRange }: RoomCardProps) {
+export function RoomCard({ room, onAddToCart, defaultDateRange }: RoomCardProps) {
   const [expanded, setExpanded] = React.useState(false);
   const [isAnimating, setIsAnimating] = React.useState(false);
 
@@ -57,13 +56,6 @@ export function RoomCard({ room, onAddToCart, onDirectCheckout, defaultDateRange
     onAddToCart(room, details);
     handleCollapse();
     toast.success("Acomodação adicionada ao carrinho");
-  };
-
-  const handleDirectCheckout = (details: RoomDetailsData) => {
-    if (onDirectCheckout) {
-      onDirectCheckout(room, details);
-      handleCollapse();
-    }
   };
 
   const handleAnimationEnd = () => {
@@ -170,7 +162,6 @@ export function RoomCard({ room, onAddToCart, onDirectCheckout, defaultDateRange
             <RoomDetailsForm
               onClose={handleCollapse}
               onSubmit={handleAddToCart}
-              onDirectCheckout={handleDirectCheckout}
               defaultDateRange={defaultDateRange}
             />
           </div>
